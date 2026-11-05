@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Four-Pillar Case Audit — AI-Assisted Research</title>
+<style>
+:root{
+  --navy:#16304d; --navy2:#1b3a5c; --teal:#2aa8a0; --teal-d:#1f8780;
+  --cream:#fdf6e3; --line:#d8dfe6; --ink:#17222e; --muted:#5a6b7c;
+  --minor:#3f8f4f; --serious:#c98a12; --critical:#b23b3b;
+  --bg:#f4f6f8;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Aptos","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.5;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 120px}
+
+header{background:var(--navy);color:#fff;padding:22px 0 18px;border-bottom:4px solid var(--teal)}
+header .wrap{padding-bottom:0}
+h1{margin:0;font-size:1.55rem;line-height:1.2;letter-spacing:.2px}
+.sub{margin:6px 0 0;color:#bcd2e4;font-style:italic;font-size:.95rem}
+.ident{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ident input{flex:1 1 200px;min-width:0;padding:9px 11px;border:1px solid #3c5f80;border-radius:6px;
+  background:#0f2338;color:#fff;font:inherit;font-size:.95rem}
+.ident input::placeholder{color:#7f9bb5}
+
+section{background:#fff;border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden}
+.shead{background:var(--navy);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.shead h2{margin:0;font-size:1.06rem;font-weight:600;flex:1 1 auto}
+.chip{background:rgba(255,255,255,.16);border-radius:99px;padding:3px 11px;font-size:.78rem;white-space:nowrap}
+.sbody{padding:16px}
+.note{background:var(--cream);border-left:4px solid #e0c060;padding:11px 13px;border-radius:0 6px 6px 0;
+  font-size:.92rem;margin:0 0 14px}
+.instr{color:var(--muted);font-size:.93rem;margin:0 0 14px}
+label.fl{display:block;font-weight:600;font-size:.9rem;margin:12px 0 5px;color:var(--navy2)}
+textarea,input[type=text]{width:100%;font:inherit;font-size:.95rem;padding:10px 11px;border:1px solid var(--line);
+  border-radius:7px;background:#fcfdfe;color:var(--ink);resize:vertical}
+textarea:focus,input:focus{outline:2px solid var(--teal);outline-offset:1px;background:#fff}
+textarea{min-height:68px}
+
+.cases{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.cbtn{flex:1 1 150px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;
+  font:inherit;font-size:.88rem;text-align:left;cursor:pointer;min-height:44px;color:var(--ink)}
+.cbtn b{display:block;font-size:.8rem;color:var(--teal-d);letter-spacing:.4px}
+.cbtn[aria-pressed=true]{border-color:var(--teal);background:#eefaf9;box-shadow:inset 0 0 0 1px var(--teal)}
+.casebox{border:1px solid var(--line);border-left:4px solid var(--teal);background:#f8fbfc;
+  padding:14px 16px;border-radius:0 8px 8px 0}
+.casebox h3{margin:0 0 8px;font-size:1rem;color:var(--navy)}
+.casebox p{margin:0 0 9px;font-size:.95rem}
+.casebox p:last-child{margin-bottom:0}
+
+.pillar{border:1px solid var(--line);border-radius:9px;margin-bottom:14px;overflow:hidden}
+.phead{display:flex;align-items:center;gap:10px;width:100%;background:var(--teal);color:#fff;
+  padding:11px 14px;border:0;font:inherit;font-weight:600;cursor:pointer;text-align:left;min-height:46px}
+.phead .ic{font-size:1.1rem}
+.phead .nm{flex:1 1 auto}
+.phead .st{font-size:.76rem;background:rgba(255,255,255,.2);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.phead .arw{transition:transform .18s}
+.pillar.closed .arw{transform:rotate(-90deg)}
+.pillar.closed .pbody{display:none}
+.pbody{padding:14px}
+.q{font-weight:600;color:var(--navy);margin:0 0 4px;font-size:.95rem}
+.guide{margin:0 0 12px;padding-left:18px;color:var(--muted);font-size:.88rem}
+.guide li{margin:2px 0}
+
+.sev{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.sev button{flex:1 1 110px;min-height:44px;border:1.5px solid var(--line);background:#fff;border-radius:8px;
+  font:inherit;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--muted)}
+.sev button[aria-pressed=true]{color:#fff}
+.sev button[data-v=Minor][aria-pressed=true]{background:var(--minor);border-color:var(--minor)}
+.sev button[data-v=Serious][aria-pressed=true]{background:var(--serious);border-color:var(--serious)}
+.sev button[data-v=Critical][aria-pressed=true]{background:var(--critical);border-color:var(--critical)}
+
+.dec{display:flex;gap:12px;align-items:flex-start;padding:11px;border:1px solid var(--line);
+  border-radius:8px;margin-bottom:8px;background:#fcfdfe;cursor:pointer}
+.dec input{margin:3px 0 0;width:20px;height:20px;flex:0 0 auto;accent-color:var(--critical)}
+.dec .dn{font-weight:700;color:var(--teal-d);flex:0 0 auto}
+.dec .dt{flex:1 1 auto;font-size:.94rem}
+.dec.sel{border-color:var(--critical);background:#fdf2f2;box-shadow:inset 0 0 0 1px var(--critical)}
+
+.rrow{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:#fcfdfe}
+.rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.rgrid .f label{display:block;font-size:.75rem;font-weight:700;color:var(--teal-d);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.rgrid textarea{min-height:76px;font-size:.88rem}
+.rowtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.rowtop span{font-weight:700;color:var(--navy);font-size:.85rem}
+.del{background:none;border:0;color:var(--critical);font:inherit;font-size:.85rem;cursor:pointer;padding:6px}
+
+.ck{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 0}
+.ck label{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);
+  border-radius:7px;font-size:.9rem;cursor:pointer;background:#fcfdfe}
+.ck input{width:19px;height:19px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--teal)}
+
+.btn{border:1.5px solid var(--navy);background:var(--navy);color:#fff;border-radius:8px;padding:10px 15px;
+  font:inherit;font-size:.9rem;font-weight:600;cursor:pointer;min-height:44px}
+.btn.ghost{background:#fff;color:var(--navy)}
+.btn.teal{background:var(--teal);border-color:var(--teal)}
+.btn.warn{background:#fff;color:var(--critical);border-color:#e3b9b9}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+  box-shadow:0 -3px 14px rgba(0,0,0,.07);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:40}
+.bar .in{max-width:1040px;margin:0 auto;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.prog{flex:1 1 180px;min-width:150px}
+.prog .t{font-size:.78rem;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between}
+.track{height:8px;background:#e4eaef;border-radius:99px;overflow:hidden}
+.fill{height:100%;width:0;background:var(--teal);transition:width .25s}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+
+.ref{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.rc{border:1px solid var(--line);border-top:4px solid var(--teal);border-radius:8px;padding:11px;background:#fcfdfe}
+.rc h4{margin:0 0 4px;font-size:.95rem;color:var(--navy)}
+.rc .qq{font-size:.86rem;font-style:italic;color:var(--teal-d);margin:0 0 6px}
+.rc p{margin:0;font-size:.84rem;color:var(--muted)}
+.key{background:#eaf4f3;border:1px solid #bfe0dd;border-radius:8px;padding:13px 15px;text-align:center;
+  font-weight:600;color:var(--navy);font-size:.95rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;background:var(--navy);color:#fff;
+  padding:11px 18px;border-radius:8px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.toast.on{opacity:1}
+.foot{text-align:center;color:var(--muted);font-size:.82rem;padding:6px 0 0}
+
+@media (max-width:760px){
+  body{font-size:15.5px}
+  h1{font-size:1.25rem}
+  .wrap{padding:0 12px 130px}
+  .sbody{padding:13px}
+  .rgrid{grid-template-columns:1fr;gap:8px}
+  .rgrid textarea{min-height:60px}
+  .ref{grid-template-columns:1fr}
+  .ck{grid-template-columns:1fr}
+  .sev button{flex:1 1 100%}
+  .cbtn{flex:1 1 100%}
+  .tools .btn{flex:1 1 calc(50% - 5px)}
+  .prog{flex:1 1 100%}
+}
+
+@media print{
+  body{background:#fff;font-size:10.5pt}
+  .bar,.tools,.noprint,.del,.toast{display:none!important}
+  header{background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  section,.pillar,.rrow,.casebox,.rc{break-inside:avoid;page-break-inside:avoid}
+  .pillar.closed .pbody{display:block!important}
+  .shead,.phead,.sev button{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  textarea,input{border:1px solid #bbb!important;background:#fff!important;overflow:visible!important}
+  .wrap{padding-bottom:0;max-width:none}
+  .cases{display:none}
+  a{text-decoration:none;color:inherit}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Four-Pillar Case Audit</h1>
+    <p class="sub">AI-Assisted Research &middot; Human-in-the-Loop Scholarship</p>
+    <div class="ident">
+      <input id="nm" type="text" placeholder="Name (optional)" autocomplete="off">
+      <input id="gp" type="text" placeholder="Group / table" autocomplete="off">
+      <input id="dt" type="text" placeholder="Date" autocomplete="off">
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <div class="shead"><h2>The Four Pillars</h2><span class="chip">Reference</span></div>
+  <div class="sbody">
+    <div class="ref">
+      <div class="rc"><h4>&#128737; Ethical</h4><p class="qq">Can I responsibly use these data?</p>
+        <p>Protecting participant data and intellectual property; preventing confidential data leakage.</p></div>
+      <div class="rc"><h4>&#10003; Valid</h4><p class="qq">How will I verify AI&rsquo;s output?</p>
+        <p>Adversarial review of outputs; treating AI agreement as potential sycophancy, not validation.</p></div>
+      <div class="rc"><h4>&#8635; Reproducible</h4><p class="qq">Could another researcher understand exactly how AI was used?</p>
+        <p>Documenting specific prompts, model versions, and generation parameters.</p></div>
+      <div class="rc"><h4>&#128065; Transparent</h4><p class="qq">Would I need to disclose this AI use?</p>
+        <p>Disclosing AI use precisely in manuscripts and methodologies.</p></div>
+    </div>
+    <div class="note" style="margin:14px 0 0">
+      <b>Ground rule:</b> you are auditing a <i>workflow</i>, not a person. Assume good intent and
+      ordinary time pressure. The question is not &ldquo;was she careless?&rdquo; but
+      &ldquo;at what point did this stop being defensible, and what would have made it defensible?&rdquo;
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>The Case</h2><span class="chip" id="caselbl">Case A</span></div>
+  <div class="sbody">
+    <div class="cases noprint" id="cases"></div>
+    <div class="casebox" id="casebox"></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Part 1 &mdash; Name the Core Problem</h2><span class="chip">3 min</span></div>
+  <div class="sbody">
+    <p class="instr">Before auditing pillar by pillar, state the single most serious problem in one sentence.
+      You will revisit this at the end to see whether the audit changed your mind.</p>
+    <label class="fl" for="p1">The core problem with this workflow is&hellip;</label>
+    <textarea id="p1" data-k="p1" placeholder="One sentence."></textarea>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Part 2 &mdash; Audit Each Pillar</h2><span class="chip">9 min</span>
+    <button class="btn ghost noprint" id="expand" style="padding:6px 11px;min-height:36px;font-size:.82rem">Expand all</button></div>
+  <div class="sbody">
+    <p class="instr">For each pillar: what actually went wrong, what should have happened instead, and how
+      serious the failure is. Rate severity even when you disagree within the group &mdash; the disagreement
+      is the useful part.</p>
+    <div id="pillars"></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Part 3 &mdash; The Point of No Return</h2><span class="chip">3 min</span></div>
+  <div class="sbody">
+    <p class="instr">Each decision below is individually reasonable, which is exactly why researchers make
+      them. Select the <b>one</b> decision after which the workflow could no longer be defended, even with
+      everything that followed done well.</p>
+    <div id="decs"></div>
+    <label class="fl" for="p3why">Why that decision, and not the one before it?</label>
+    <textarea id="p3why" data-k="p3why" placeholder="What became impossible to recover from at that point?"></textarea>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Part 4 &mdash; Redesign the Workflow</h2><span class="chip">4 min</span></div>
+  <div class="sbody">
+    <p class="instr">AI is <b>not</b> prohibited here. Rebuild this study so the same analytic help would be
+      defensible. Specify what AI does, what the human decides, how the output is verified, and what gets
+      recorded.</p>
+    <div id="rows"></div>
+    <button class="btn ghost noprint" id="addrow">+ Add a task</button>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Part 5 &mdash; Draft the Disclosure</h2><span class="chip">3 min</span></div>
+  <div class="sbody">
+    <p class="instr">Write the AI-use statement this study should have carried. Two or three sentences.
+      Use the checklist to test whether yours is complete.</p>
+    <label class="fl" for="p5">AI-use statement</label>
+    <textarea id="p5" data-k="p5" style="min-height:110px"></textarea>
+    <label class="fl">Does your statement include&hellip;</label>
+    <div class="ck" id="ck"></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Part 6 &mdash; Report Out</h2><span class="chip">Debrief</span></div>
+  <div class="sbody">
+    <label class="fl" for="r1">Which pillar did your group rate most severely, and was that unanimous?</label>
+    <textarea id="r1" data-k="r1"></textarea>
+    <label class="fl" for="r2">What did your group disagree about?</label>
+    <textarea id="r2" data-k="r2"></textarea>
+    <label class="fl" for="r3">Having audited the case, would you now revise your Part 1 sentence? How?</label>
+    <textarea id="r3" data-k="r3"></textarea>
+    <div class="key" style="margin-top:16px">
+      A workflow can produce an accurate result and still fail the audit.
+      Accuracy is one pillar of four.
+    </div>
+  </div>
+</section>
+
+<p class="foot">AI-Assisted Research &middot; Human-in-the-Loop Scholarship &middot; UTHSC Teaching and Learning Center</p>
+</div>
+
+<div class="bar noprint">
+  <div class="in">
+    <div class="prog">
+      <div class="t"><span>Progress</span><span id="pct">0%</span></div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+    <div class="tools">
+      <button class="btn teal" id="print">Print / PDF</button>
+      <button class="btn ghost" id="dl">Download</button>
+      <button class="btn ghost" id="cp">Copy</button>
+      <button class="btn warn" id="rs">Reset</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var KEY="fourPillarAudit.v1";
+
+var CASES={
+ A:{t:"Case A — AI-assisted qualitative coding of resident evaluations",
+   p:["A second-year research fellow is studying how residents describe feedback in a surgical training program. She has 35 narrative evaluations written by residents about their rotations.",
+      "Working against a submission deadline, she removes resident names from the files and pastes all 35 narratives into a free, publicly available generative-AI chatbot on her personal laptop. She asks it to identify major themes and return representative quotations for each.",
+      "The tool returns five themes with supporting quotations. The themes look plausible and match her impressions from reading the evaluations weeks earlier. She does not return to the original narratives to confirm them, and no second analyst reviews the coding.",
+      "She copies the output into her draft, lightly edits several quotations &ldquo;for clarity,&rdquo; and closes the chat window without saving the prompts, the model version, or the raw output.",
+      "In the manuscript, the Methods section states only: <i>&ldquo;Narrative evaluations were analyzed using AI-assisted qualitative coding.&rdquo;</i> The journal requires authors to declare any AI tools used in research or writing."]},
+ B:{t:"Case B — The literature review that cited work that does not exist",
+   p:["A fellow asks an AI tool to summarize the evidence on handoff communication interventions in internal medicine residency. It produces a fluent synthesis with 14 citations.",
+      "Twelve citations are real. Two are not: the authors and journals exist, the titles are plausible, and the DOIs resolve to unrelated papers. The fabricated references support the review&rsquo;s central claim that structured handoffs reduce adverse events in training settings.",
+      "The fellow checks four citations at random, all real, and submits. A reviewer identifies the two fabricated references during peer review."]},
+ C:{t:"Case C — Statistical code that ran without error",
+   p:["A fellow uses an AI assistant to write R code for a logistic regression examining predictors of fellowship match success. The code runs cleanly and produces an interpretable odds ratio table.",
+      "The AI silently set the reference group to the alphabetically first category rather than the clinically meaningful comparison, and used listwise deletion that dropped 23% of cases without comment.",
+      "The fellow does not read the code line by line, does not inspect the missingness pattern, and reports the odds ratios as written. The direction of the headline finding reverses when the reference group is corrected."]},
+ D:{t:"Case D — The conclusion the design could not support",
+   p:["A fellow runs a retrospective chart review comparing outcomes before and after a new resident night-float system. She asks an AI tool to help &ldquo;strengthen and polish&rdquo; the discussion section.",
+      "The returned text is noticeably better written and reads as more confident. It states that the night-float system &ldquo;reduced complication rates,&rdquo; replacing her original hedged language about association.",
+      "She accepts the revision because it is clearer and reads more like published work. No one on the author team flags the shift from association to causation before submission."]},
+ E:{t:"Case E — Summarizing faculty evaluations of residents",
+   p:["A program director uses an AI tool to summarize 120 faculty evaluations of residents for the Clinical Competency Committee, pasting the full text into an institutionally approved platform.",
+      "The summaries are well organized and save several hours. Reviewing them later, an associate program director notices that specific, serious concerns about one resident&rsquo;s professionalism have been smoothed into general developmental language in the summary.",
+      "The committee has already met and made promotion decisions using the summaries rather than the original evaluations."]},
+ F:{t:"Case F — The workflow nobody can reconstruct",
+   p:["Over six months, a fellow uses several AI tools at different points in a project: brainstorming the research question, generating database search strings, drafting figure code, and revising the manuscript&rsquo;s language.",
+      "Every output he used is accurate. He verified the search strategy with a medical librarian, checked every citation, and reviewed all code. The science is sound and the findings hold up.",
+      "A journal asks him to specify which tools were used, at which stages, and with what human oversight. He switched tools mid-project, cannot recall which drafts came from which, kept no prompt log, and cannot reconstruct the sequence.",
+      "Nothing in this project produced a wrong result. There is simply no record of how it was produced."]}
+};
+
+var PILLARS=[
+ {k:"eth",ic:"&#128737;",n:"Ethical",q:"Can I responsibly use these data?",
+  g:["Were these data appropriate to enter into this particular tool?",
+     "Is de-identification by name removal sufficient for narrative text?",
+     "Who consented to this use, and to what?",
+     "Could a participant be re-identified from the content of their own narrative?"]},
+ {k:"val",ic:"&#10003;",n:"Valid",q:"How will I verify AI's output?",
+  g:["What evidence supports the output that was accepted?",
+     "How would anyone know whether the quotations or claims are accurate?",
+     "Does the output matching prior impressions confirm it, or confirm bias?",
+     "What would adversarial review of this output have looked like?"]},
+ {k:"rep",ic:"&#8635;",n:"Reproducible",q:"Could another researcher understand exactly how AI was used?",
+  g:["What records would a second researcher need to repeat this work?",
+     "Which of those records still exist?",
+     "Could the researcher repeat this analysis six months from now?",
+     "Does the tool even produce the same output from the same prompt?"]},
+ {k:"tra",ic:"&#128065;",n:"Transparent",q:"Would I need to disclose this AI use in my manuscript?",
+  g:["What does the stated method tell a reader? What does it conceal?",
+     "What does the journal&rsquo;s policy actually require here?",
+     "Does the Methods section let a reader judge the trustworthiness of the findings?",
+     "Is an incomplete disclosure better or worse than none?"]}
+];
+
+var DECSETS={
+ A:["Chose a free, public AI platform on a personal laptop without checking whether it was institutionally approved for research data.",
+    "Removed names only, and treated the narratives as de-identified.",
+    "Uploaded all 35 full narrative evaluations in a single pass.",
+    "Accepted the five returned themes without a second analyst or independent coding.",
+    "Did not return to the original narratives to confirm the themes or quotations.",
+    "Edited representative quotations &ldquo;for clarity&rdquo; without checking them against the source.",
+    "Closed the session without saving prompts, model version, or raw output.",
+    "Described the method in the manuscript only as &ldquo;AI-assisted qualitative coding.&rdquo;"],
+ B:["Asked an AI tool to produce a literature synthesis rather than to help search for literature.",
+    "Accepted a fluent synthesis without obtaining the underlying papers.",
+    "Verified four citations at random rather than all fourteen.",
+    "Allowed unverified citations to support the review&rsquo;s central claim.",
+    "Submitted without a systematic citation check."],
+ C:["Asked an AI assistant to write analysis code without specifying the reference group.",
+    "Accepted code that ran without error as code that was correct.",
+    "Did not read the generated code line by line.",
+    "Did not inspect the missingness pattern or question the 23% drop.",
+    "Reported the odds ratios without running model diagnostics.",
+    "Built the headline finding on an unexamined analytic choice."],
+ D:["Asked AI to &ldquo;strengthen and polish&rdquo; the discussion without constraining its claims.",
+    "Accepted a revision that read better without comparing it to the original claims.",
+    "Allowed hedged language about association to be replaced with causal language.",
+    "Did not re-check the conclusions against the study design.",
+    "Submitted without any co-author reviewing the revised discussion."],
+ E:["Used AI summaries of evaluations as the committee&rsquo;s working document.",
+    "Did not validate summaries against the original evaluations before the meeting.",
+    "Did not check whether the tool systematically softened negative content.",
+    "Allowed the committee to make promotion decisions from summaries alone.",
+    "Kept no record of which summary corresponded to which source evaluations."],
+ F:["Began using AI tools without deciding in advance what would be recorded.",
+    "Switched tools mid-project without noting when or why.",
+    "Kept no prompt log or record of model versions.",
+    "Did not track which manuscript sections were AI-revised.",
+    "Relied on memory to reconstruct a six-month workflow."]
+};
+
+var CK=["The specific tool and model version","The stage(s) of research where it was used",
+ "The specific task it performed","How a human verified the output",
+ "Whether sensitive or confidential data were entered","Who takes responsibility for the final content"];
+
+var RLAB=["Research task","What AI does","What the human decides","How it is verified","What is documented"];
+function seedRows(){return[["","","","",""],["","","","",""],["","","","",""]];}
+
+var S={c:"A",f:{},sev:{},dec:{},ck:{},rows:[]};
+try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); if(o&&typeof o==="object"){
+  S.c=o.c||"A"; S.f=o.f||{}; S.sev=o.sev||{}; S.dec=o.dec||{}; S.ck=o.ck||{};
+  S.rows=Array.isArray(o.rows)&&o.rows.length?o.rows:[];}}}catch(e){}
+if(!S.rows.length) S.rows=seedRows();
+
+var saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(function(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},250);}
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c];});}
+function strip(h){var d=document.createElement("div");d.innerHTML=h;return d.textContent||"";}
+
+function renderCases(){
+  var w=$("cases"),h="";
+  Object.keys(CASES).forEach(function(k){
+    var parts=CASES[k].t.split("—");
+    var short=(parts[1]||CASES[k].t).trim();
+    h+='<button class="cbtn" type="button" data-c="'+k+'" aria-pressed="'+(S.c===k)+'"><b>CASE '+k+'</b>'+esc(short)+'</button>';
+  });
+  w.innerHTML=h;
+  w.querySelectorAll(".cbtn").forEach(function(b){
+    b.addEventListener("click",function(){
+      if(S.c===b.dataset.c) return;
+      S.c=b.dataset.c;save();renderCases();renderCase();renderDecs();refresh();
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+  });
+}
+function renderCase(){
+  var c=CASES[S.c];
+  $("caselbl").textContent="Case "+S.c;
+  $("casebox").innerHTML="<h3>"+c.t+"</h3>"+c.p.map(function(p){return"<p>"+p+"</p>";}).join("");
+}
+
+function renderPillars(){
+  var narrow=window.matchMedia("(max-width:760px)").matches, h="";
+  PILLARS.forEach(function(p,i){
+    var open=!narrow||i===0;
+    h+='<div class="pillar'+(open?"":" closed")+'" data-p="'+p.k+'">'+
+       '<button class="phead" type="button" aria-expanded="'+open+'">'+
+         '<span class="ic">'+p.ic+'</span><span class="nm">'+p.n+'</span>'+
+         '<span class="st" data-st="'+p.k+'">—</span><span class="arw">&#9662;</span></button>'+
+       '<div class="pbody">'+
+         '<p class="q">'+p.q+'</p><ul class="guide">'+p.g.map(function(g){return"<li>"+g+"</li>";}).join("")+'</ul>'+
+         '<label class="fl">What went wrong in this case</label>'+
+         '<textarea data-k="'+p.k+'_w"></textarea>'+
+         '<label class="fl">What should have happened instead</label>'+
+         '<textarea data-k="'+p.k+'_s"></textarea>'+
+         '<label class="fl">Severity of this failure</label>'+
+         '<div class="sev" data-sev="'+p.k+'">'+
+           ["Minor","Serious","Critical"].map(function(v){
+             return'<button type="button" data-v="'+v+'" aria-pressed="false">'+v+'</button>';}).join("")+
+         '</div></div></div>';
+  });
+  $("pillars").innerHTML=h;
+  $("pillars").querySelectorAll(".phead").forEach(function(b){
+    b.addEventListener("click",function(){
+      var closed=b.parentNode.classList.toggle("closed");
+      b.setAttribute("aria-expanded",String(!closed));
+    });
+  });
+  $("pillars").querySelectorAll(".sev button").forEach(function(b){
+    b.addEventListener("click",function(){
+      var k=b.parentNode.getAttribute("data-sev");
+      S.sev[k]=(S.sev[k]===b.dataset.v)?null:b.dataset.v;
+      save();syncSev();refresh();
+    });
+  });
+}
+function syncSev(){
+  document.querySelectorAll(".sev").forEach(function(g){
+    var k=g.getAttribute("data-sev");
+    g.querySelectorAll("button").forEach(function(b){
+      b.setAttribute("aria-pressed",String(S.sev[k]===b.dataset.v));});
+  });
+  PILLARS.forEach(function(p){
+    var el=document.querySelector('[data-st="'+p.k+'"]');
+    if(el) el.textContent=S.sev[p.k]||"—";
+  });
+}
+
+function decList(){return DECSETS[S.c]||DECSETS.A;}
+function renderDecs(){
+  var sel=S.dec[S.c];
+  $("decs").innerHTML=decList().map(function(d,i){
+    return'<label class="dec'+(sel===i?" sel":"")+'" data-i="'+i+'">'+
+      '<input type="radio" name="pnr" '+(sel===i?"checked":"")+'>'+
+      '<span class="dn">'+(i+1)+'</span><span class="dt">'+d+'</span></label>';
+  }).join("");
+  $("decs").querySelectorAll(".dec").forEach(function(l){
+    l.addEventListener("click",function(){
+      S.dec[S.c]=parseInt(l.dataset.i,10);save();renderDecs();refresh();});
+  });
+}
+
+function renderRows(){
+  $("rows").innerHTML=S.rows.map(function(r,i){
+    return'<div class="rrow"><div class="rowtop"><span>Task '+(i+1)+'</span>'+
+      (S.rows.length>1?'<button class="del noprint" type="button" data-d="'+i+'">Remove</button>':'')+'</div>'+
+      '<div class="rgrid">'+RLAB.map(function(lb,j){
+        return'<div class="f"><label>'+lb+'</label><textarea data-r="'+i+'" data-j="'+j+'">'+esc(r[j]||"")+'</textarea></div>';
+      }).join("")+'</div></div>';
+  }).join("");
+  $("rows").querySelectorAll("textarea").forEach(function(t){
+    t.addEventListener("input",function(){
+      S.rows[+t.dataset.r][+t.dataset.j]=t.value;save();refresh();});
+  });
+  $("rows").querySelectorAll(".del").forEach(function(b){
+    b.addEventListener("click",function(){
+      S.rows.splice(+b.dataset.d,1);save();renderRows();refresh();});
+  });
+}
+
+function renderCk(){
+  $("ck").innerHTML=CK.map(function(c,i){
+    return'<label><input type="checkbox" data-c="'+i+'" '+(S.ck[i]?"checked":"")+'><span>'+c+'</span></label>';
+  }).join("");
+  $("ck").querySelectorAll("input").forEach(function(x){
+    x.addEventListener("change",function(){S.ck[x.dataset.c]=x.checked;save();});
+  });
+}
+
+function bindText(){
+  document.querySelectorAll("[data-k]").forEach(function(el){
+    var k=el.getAttribute("data-k");
+    if(S.f[k]) el.value=S.f[k];
+    el.addEventListener("input",function(){S.f[k]=el.value;save();refresh();});
+  });
+  ["nm","gp","dt"].forEach(function(id){
+    var el=$(id); if(!el) return;
+    if(S.f[id]) el.value=S.f[id];
+    el.addEventListener("input",function(){S.f[id]=el.value;save();});
+  });
+}
+
+function refresh(){
+  var done=0,total=0;
+  total++; if((S.f.p1||"").trim()) done++;
+  PILLARS.forEach(function(p){
+    total+=3;
+    if((S.f[p.k+"_w"]||"").trim()) done++;
+    if((S.f[p.k+"_s"]||"").trim()) done++;
+    if(S.sev[p.k]) done++;
+  });
+  total+=2;
+  if(S.dec[S.c]!==undefined&&S.dec[S.c]!==null) done++;
+  if((S.f.p3why||"").trim()) done++;
+  total++; if(S.rows.some(function(r){return r.some(function(x){return(x||"").trim();});})) done++;
+  total++; if((S.f.p5||"").trim()) done++;
+  var v=total?Math.round(done/total*100):0;
+  $("pct").textContent=v+"%";
+  $("fill").style.width=v+"%";
+}
+
+function summary(){
+  var L=[],c=CASES[S.c],sel=S.dec[S.c];
+  L.push("FOUR-PILLAR CASE AUDIT");
+  L.push("AI-Assisted Research - Human-in-the-Loop Scholarship");
+  L.push("");
+  L.push("Name: "+(S.f.nm||"-")+"   Group: "+(S.f.gp||"-")+"   Date: "+(S.f.dt||"-"));
+  L.push("Case "+S.c+": "+strip(c.t));
+  L.push("");
+  L.push("PART 1 - CORE PROBLEM");
+  L.push(S.f.p1||"(blank)");
+  L.push("");
+  L.push("PART 2 - PILLAR AUDIT");
+  PILLARS.forEach(function(p){
+    L.push("");
+    L.push("["+p.n.toUpperCase()+"]  Severity: "+(S.sev[p.k]||"not rated"));
+    L.push("  What went wrong: "+(S.f[p.k+"_w"]||"(blank)"));
+    L.push("  What should have happened: "+(S.f[p.k+"_s"]||"(blank)"));
+  });
+  L.push("");
+  L.push("PART 3 - POINT OF NO RETURN");
+  L.push((sel===undefined||sel===null)?"(not selected)":("Decision "+(sel+1)+": "+strip(decList()[sel])));
+  L.push("Why: "+(S.f.p3why||"(blank)"));
+  L.push("");
+  L.push("PART 4 - REDESIGNED WORKFLOW");
+  S.rows.forEach(function(r,i){
+    L.push("");
+    L.push("Task "+(i+1)+": "+(r[0]||"(untitled)"));
+    for(var j=1;j<5;j++) L.push("  "+RLAB[j]+": "+(r[j]||"(blank)"));
+  });
+  L.push("");
+  L.push("PART 5 - AI-USE DISCLOSURE");
+  L.push(S.f.p5||"(blank)");
+  L.push("Checklist: "+(CK.filter(function(x,i){return S.ck[i];}).join("; ")||"none marked"));
+  L.push("");
+  L.push("PART 6 - REPORT OUT");
+  L.push("Most severe pillar: "+(S.f.r1||"(blank)"));
+  L.push("Disagreements: "+(S.f.r2||"(blank)"));
+  L.push("Revised view: "+(S.f.r3||"(blank)"));
+  return L.join("\n");
+}
+function toast(m){var t=$("toast");t.textContent=m;t.classList.add("on");
+  setTimeout(function(){t.classList.remove("on");},1900);}
+
+renderCases();renderCase();renderPillars();renderDecs();renderRows();renderCk();
+bindText();syncSev();refresh();
+
+$("expand").addEventListener("click",function(){
+  var any=document.querySelector(".pillar.closed");
+  document.querySelectorAll(".pillar").forEach(function(p){
+    p.classList.toggle("closed",!any);
+    p.querySelector(".phead").setAttribute("aria-expanded",String(!!any));
+  });
+  this.textContent=any?"Collapse all":"Expand all";
+});
+
+$("addrow").addEventListener("click",function(){
+  S.rows.push(["","","","",""]);save();renderRows();refresh();
+});
+
+$("print").addEventListener("click",function(){
+  document.querySelectorAll("textarea").forEach(function(t){
+    t.setAttribute("data-h",t.style.height);
+    t.style.height="auto";
+    t.style.height=Math.max(t.scrollHeight,34)+"px";
+  });
+  window.print();
+  setTimeout(function(){
+    document.querySelectorAll("textarea").forEach(function(t){t.style.height=t.getAttribute("data-h")||"";});
+  },700);
+});
+
+$("dl").addEventListener("click",function(){
+  var b=new Blob([summary()],{type:"text/plain;charset=utf-8"}),u=URL.createObjectURL(b),a=document.createElement("a");
+  a.href=u;a.download="four-pillar-audit-case-"+S.c+".txt";document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(u);toast("Downloaded");
+});
+
+$("cp").addEventListener("click",function(){
+  var txt=summary();
+  function fallback(){
+    var ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");toast("Copied to clipboard");}catch(e){toast("Copy failed - use Download");}
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){toast("Copied to clipboard");},fallback);
+  } else fallback();
+});
+
+$("rs").addEventListener("click",function(){
+  if(!confirm("Clear all responses on this device? This cannot be undone.")) return;
+  try{localStorage.removeItem(KEY);}catch(e){}
+  S={c:"A",f:{},sev:{},dec:{},ck:{},rows:seedRows()};
+  ["nm","gp","dt"].forEach(function(id){if($(id))$(id).value="";});
+  renderCases();renderCase();renderPillars();renderDecs();renderRows();renderCk();
+  bindText();syncSev();refresh();toast("Worksheet cleared");
+});
+
+window.addEventListener("beforeprint",function(){
+  document.querySelectorAll(".pillar").forEach(function(p){p.classList.remove("closed");});
+});
+})();
+</script>
+</body>
+</html>
